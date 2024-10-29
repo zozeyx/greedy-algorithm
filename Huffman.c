@@ -3,204 +3,193 @@
 #include <string.h>
 
 #define ASCII_MAX 128
-#define MAX_CODE_LENGTH 8
+#define MAX_LEN 8
 
-typedef struct Node {
-    struct Node *left, *right;
-    int ascii_value;
-    int frequency;
-} Node;
+typedef struct NODE {
+    struct NODE *left, *right;
+    int ascii;
+    int cnt;
+} NODE;
 
 typedef struct {
-    Node *heap[ASCII_MAX];
+    NODE *heap[ASCII_MAX];
     int size;
 } PriorityQueue;
 
-void enqueue(PriorityQueue* pq, Node* node) {
+void insert_node(PriorityQueue* pq, NODE* node) {
     pq->heap[pq->size] = node;
-    int idx = pq->size;
+    int i = pq->size;
 
-    while(idx > 0 && pq->heap[idx]->frequency < pq->heap[(idx - 1) / 2]->frequency) {
-        Node* temp = pq->heap[(idx - 1) / 2];
-        pq->heap[(idx - 1) / 2] = pq->heap[idx];
-        pq->heap[idx] = temp;
-        idx = (idx - 1) / 2;
+    while(i > 0 && pq->heap[i]->cnt < pq->heap[(i-1)/2]->cnt) {
+        NODE* temp = pq->heap[(i-1)/2];
+        pq->heap[(i-1)/2] = pq->heap[i];
+        pq->heap[i] = temp;
+        i = (i-1)/2;
     }
 
     pq->size++;
 }
 
-Node* dequeue(PriorityQueue* pq) {
+NODE* PriorityQueue_pop(PriorityQueue* pq) {
     if(pq->size == 0) return NULL;
 
-    Node* min_node = pq->heap[0];
+    NODE* min_node = pq->heap[0];
     pq->heap[0] = pq->heap[--pq->size];
     pq->heap[pq->size] = NULL;
 
-    int idx = 0;
-    while(idx * 2 + 1 < pq->size) {
-        int left_child = idx * 2 + 1;
-        int right_child = idx * 2 + 2;
-        int min_idx = left_child;
+    int i = 0;
+    while(i*2+1 < pq->size) {
+        int left = i*2+1;
+        int right = i*2+2;
+        int min = left;
 
-        if(right_child < pq->size && pq->heap[right_child]->frequency < pq->heap[left_child]->frequency) min_idx = right_child;
-        if(pq->heap[idx]->frequency < pq->heap[min_idx]->frequency) break;
+        if(right < pq->size && pq->heap[right]->cnt < pq->heap[left]->cnt) min = right;
+        if(pq->heap[i]->cnt < pq->heap[min]->cnt) break;
 
-        Node* temp = pq->heap[idx];
-        pq->heap[idx] = pq->heap[min_idx];
-        pq->heap[min_idx] = temp;
+        NODE* temp = pq->heap[i];
+        pq->heap[i] = pq->heap[min];
+        pq->heap[min] = temp;
 
-        idx = min_idx;
+        i = min;
     }
 
     return min_node;
 }
 
-Node* createHuffmanTree(char* filename) {
-    int char_frequency[ASCII_MAX] = {0};
+NODE* HuffmanCoding(char* file_name) {
+    int input[ASCII_MAX] = {0};
 
-    FILE *file = fopen(filename, "r");
+    FILE *file = fopen(file_name, "r");
     if (file == NULL) {
-        printf("Cannot open file: %s\n", filename);
+        printf("%s 파일을 열 수 없음.\n", file_name);
         return NULL;
     }
     fseek(file, 0, SEEK_END);
     long file_size = ftell(file);
     fseek(file, 0, SEEK_SET);
 
-    char* input_data = (char*)malloc(file_size + 1);
-    fscanf(file, "%s", input_data);
+    char* inputs = (char*)malloc(file_size+1);
+    fscanf(file, "%s", inputs);
     fclose(file);
 
     for(int i = 0; i < file_size; i++) {
-        char_frequency[input_data[i]]++;
+        input[inputs[i]]++;
     }
 
     PriorityQueue* pq = (PriorityQueue*)malloc(sizeof(PriorityQueue));
-    pq->size = 0;
 
     for(int i = 0; i < ASCII_MAX; i++) {
-        if(char_frequency[i] > 0) {
-            Node* node = (Node*)malloc(sizeof(Node));
-            node->ascii_value = i;
-            node->frequency = char_frequency[i];
-            node->left = node->right = NULL;
+        if(input[i] > 0 ) {
+           NODE* node = (NODE*)malloc(sizeof(NODE));
+           node->ascii = i;
+           node->cnt = input[i];
+           node->left = node->right = NULL;
 
-            enqueue(pq, node);
+           insert_node(pq, node);
         }
     }
 
     while(pq->size >= 2) {
-        Node* left_node = dequeue(pq);
-        Node* right_node = dequeue(pq);
+        NODE* left = PriorityQueue_pop(pq);
+        NODE* right = PriorityQueue_pop(pq);
 
-        Node* parent_node = (Node*)malloc(sizeof(Node));
-        parent_node->frequency = left_node->frequency + right_node->frequency;
-        parent_node->left = left_node;
-        parent_node->right = right_node;
+        NODE* node = (NODE*)malloc(sizeof(NODE));
+        node->cnt = left->cnt + right->cnt;
+        node->left = left;
+        node->right = right;
 
-        enqueue(pq, parent_node);
+        insert_node(pq, node);
     }
 
     return pq->heap[0];
 }
 
-void generateCodes(Node* node, char codes[][MAX_CODE_LENGTH], char current_code[]) {
-    char left_code[MAX_CODE_LENGTH];
-    char right_code[MAX_CODE_LENGTH];
+void getCode(NODE* node, char code[][MAX_LEN], char c[]) {
+    char left[MAX_LEN];
+    char right[MAX_LEN];
 
     if(node->left == NULL && node->right == NULL) {
-        strcpy(codes[node->ascii_value], current_code);
-        return;
+        strcpy(code[node->ascii], c);
+        return ;
     }
     if(node->left != NULL) {
-        strcpy(left_code, current_code);
-        strcat(left_code, "0");
-        generateCodes(node->left, codes, left_code);
+        strcpy(left, c);
+        strcat(left, "0");
+        getCode(node->left, code, left);
     }
-    if(node->right != NULL) {
-        strcpy(right_code, current_code);
-        strcat(right_code, "1");
-        generateCodes(node->right, codes, right_code);
+    if(node->right != NULL){
+        strcpy(right, c);
+        strcat(right, "1");
+        getCode(node->right, code, right);
     }
 }
 
-void encodeHuffman(Node* root, char* filename) {
-    FILE *file = fopen(filename, "r");
+void HuffmanEncoding(NODE* root, char* file_name) {
+    FILE *file = fopen(file_name, "r");
     if (file == NULL) {
-        printf("Cannot open file: %s\n", filename);
-        return;
+        printf("%s 파일을 열 수 없음.\n", file_name);
+        return ;
     }
     fseek(file, 0, SEEK_END);
     long file_size = ftell(file);
     fseek(file, 0, SEEK_SET);
 
-    char* input_data = (char*)malloc(file_size + 1);
-    fscanf(file, "%s", input_data);
+    char* inputs = (char*)malloc(file_size+1);
+    fscanf(file, "%s", inputs);
     fclose(file);
 
-    char codes[ASCII_MAX][MAX_CODE_LENGTH];
-    char current_code[MAX_CODE_LENGTH] = "";
+    char code[ASCII_MAX][MAX_LEN];
+    char c[MAX_LEN] = "";
     for(int i = 0; i < ASCII_MAX; i++) {
-        codes[i][0] = '\0';
+        code[i][0] = '\0';
     }
-    generateCodes(root, codes, current_code);
+    getCode(root, code, c);
     
-    FILE* output_file = fopen("Huffman_encoded.txt", "w");
-    if (output_file == NULL) {
-        printf("Cannot open file: Huffman_encoded.txt\n");
-        return;
-    }
-
+    // Console 출력
     for(int i = 0; i < file_size; i++) {
-        fprintf(output_file, "%s", codes[input_data[i]]);
+        printf("%s", code[inputs[i]]);
     }
-    fclose(output_file);
+    printf("\n"); // 출력 후 개행 추가
 }
 
-void decodeHuffman(Node* root, char* filename) {
-    FILE* file = fopen(filename, "r");
+void HuffmanDecoding(NODE* root, char* file_name) {
+    FILE* file = fopen(file_name, "r");
     if (file == NULL) {
-        printf("Cannot open file: %s\n", filename);
-        return;
+        printf("%s 파일을 열 수 없음.\n", file_name);
+        return ;
     }
     fseek(file, 0, SEEK_END);
     long file_size = ftell(file);
     fseek(file, 0, SEEK_SET);
 
-    char* input_data = (char*)malloc(file_size + 1);
-    fscanf(file, "%s", input_data);
+    char* inputs = (char*)malloc(file_size+1);
+    fscanf(file, "%s", inputs);
     fclose(file);
 
-    FILE* output_file = fopen("Huffman_decoded.txt", "w");
-    if (output_file == NULL) {
-        printf("Cannot open file: Huffman_decoded.txt\n");
-        return;
-    }
-
-    Node* current_node = root;
+    // Console 출력
+    NODE* node = root;
     for(int i = 0; i < file_size; i++) {
-        if(current_node->left == NULL && current_node->right == NULL) {
-            fprintf(output_file, "%c", current_node->ascii_value);
-            current_node = root;
+        if(node->left == NULL && node->right == NULL) {
+            printf("%c", node->ascii);
+            node = root;
         }
-        if(input_data[i] == '0') {
-            current_node = current_node->left;
-        } else if(input_data[i] == '1') {
-            current_node = current_node->right;
+        if(inputs[i] == '0') {
+            node = node->left;
+        }
+        else if(inputs[i] == '1') {
+            node = node->right;
         }
     }
-    if(current_node->left == NULL && current_node->right == NULL) {
-        fprintf(output_file, "%c", current_node->ascii_value);
-        current_node = root;
+    if(node->left == NULL && node->right == NULL) {
+        printf("%c", node->ascii);
     }
-    fclose(output_file);
+    printf("\n"); // 출력 후 개행 추가
 }
 
 int main() {
-    Node* root = createHuffmanTree("Huffman_input.txt");
-    encodeHuffman(root, "Huffman_input.txt");
-    decodeHuffman(root, "Huffman_input2.txt"); // Huffman_encoded
+    NODE* root = HuffmanCoding("Huffman_input.txt");
+    HuffmanEncoding(root, "Huffman_input.txt");
+    HuffmanDecoding(root, "Huffman_encoded.txt"); // 허프만 인코딩 결과 파일에서 디코딩
 
     return 0;
 }
