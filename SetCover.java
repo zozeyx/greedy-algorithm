@@ -1,6 +1,6 @@
 import java.util.*;
 
-public class SetCoverSolver {
+public class SetCover{
     public static void main(String[] args) {
         Network graph = new Network();
 
@@ -23,28 +23,28 @@ public class SetCoverSolver {
         graph.initializeNodes();
         graph.generateSets();
         
-        long startTime = System.currentTimeMillis();
+        long startTime = System.nanoTime();
         List<List<String>> coverSolution = graph.approximateSetCover();
-        long endTime = System.currentTimeMillis();
+        long endTime = System.nanoTime();
 
         System.out.println("Approximate Set Cover:");
         for (List<String> group : coverSolution) {
             System.out.println(group);
         }
-        System.out.println("Approximate Set Cover Time (ms): " + (endTime - startTime));
+        System.out.println("Approximate Set Cover Time (ns): " + (endTime - startTime));
 
         System.out.println();
 
         graph.generateSets();
-        startTime = System.currentTimeMillis();
+        startTime = System.nanoTime();
         coverSolution = graph.optimalSetCover();
-        endTime = System.currentTimeMillis();
+        endTime = System.nanoTime();
 
         System.out.println("Optimal Set Cover:");
         for (List<String> group : coverSolution) {
             System.out.println(group);
         }
-        System.out.println("Optimal Set Cover Time (ms): " + (endTime - startTime));
+        System.out.println("Optimal Set Cover Time (ns): " + (endTime - startTime));
     }
 }
 
