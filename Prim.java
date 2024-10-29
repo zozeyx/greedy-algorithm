@@ -86,8 +86,8 @@ public class Prim{
         // Prim 알고리즘 실행 (시작점을 2로 설정)
         primMST(graph, vertices);
 
-        long endTime = System.currentTimeMillis(); // 종료 시간 기록
+        long endTime = System.nanoTime(); // 종료 시간 기록
         long duration = (endTime - startTime); // 실행 시간 계산
-        System.out.println("Running Time: " + duration / 1000.0 + " s");
+        System.out.println("Running Time: " + duration / 100000.0 + "ms");
     }
 }
