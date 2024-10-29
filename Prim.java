@@ -15,7 +15,7 @@ class Edge implements Comparable<Edge> {
     }
 }
 
-public class PrimAlgorithm {
+public class Prim{
     public static void primMST(List<List<Edge>> graph, int vertices) {
         boolean[] visited = new boolean[vertices];
         PriorityQueue<Edge> pq = new PriorityQueue<>();
