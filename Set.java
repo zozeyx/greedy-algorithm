@@ -23,28 +23,28 @@ public class SetCoverSolver {
         graph.initializeNodes();
         graph.generateSets();
         
-        long startTime = System.nanoTime();
+        long startTime = System.currentTimeMillis();
         List<List<String>> coverSolution = graph.approximateSetCover();
-        long endTime = System.nanoTime();
+        long endTime = System.currentTimeMillis();
 
         System.out.println("Approximate Set Cover:");
         for (List<String> group : coverSolution) {
             System.out.println(group);
         }
-        System.out.println("Approximate Set Cover Time (ns): " + (endTime - startTime));
+        System.out.println("Approximate Set Cover Time (ms): " + (endTime - startTime));
 
         System.out.println();
 
         graph.generateSets();
-        startTime = System.nanoTime();
+        startTime = System.currentTimeMillis();
         coverSolution = graph.optimalSetCover();
-        endTime = System.nanoTime();
+        endTime = System.currentTimeMillis();
 
         System.out.println("Optimal Set Cover:");
         for (List<String> group : coverSolution) {
             System.out.println(group);
         }
-        System.out.println("Optimal Set Cover Time (ns): " + (endTime - startTime));
+        System.out.println("Optimal Set Cover Time (ms): " + (endTime - startTime));
     }
 }
 
@@ -75,105 +75,4 @@ class Network {
     }
 
     public void addLink(Link link) {
-        connections.add(link);
-    }
-
-    public void initializeNodes() {
-        for (Link link : connections) {
-            allNodes.add(link.node1);
-            allNodes.add(link.node2);
-        }
-        nodeList = new ArrayList<>(allNodes);
-    }
-
-    public void generateSets() {
-        nodeGroups = new ArrayList<>();
-
-        for(String node : nodeList) {
-            List<String> subset = new ArrayList<>();
-
-            for(Link link : connections) {
-                if(link.node1.equals(node)) {
-                    subset.add(link.node2);
-                }
-                else if(link.node2.equals(node)) {
-                    subset.add(link.node1);
-                }
-            }
-            subset.add(node);
-            nodeGroups.add(subset);
-        }
-    }
-
-    public List<List<String>> approximateSetCover() {
-        List<List<String>> selectedGroups = new ArrayList<>();
-        Set<String> uncoveredNodes = new HashSet<>(allNodes);
-
-        while(!uncoveredNodes.isEmpty()) {
-            int maxCoverage = 0;
-            List<String> bestGroup = null;
-
-            for(List<String> group : nodeGroups) {
-                int coveredNodes = 0;
-                
-                for(String node : uncoveredNodes) {
-                    if(group.contains(node)) coveredNodes++;
-                }
-                if(maxCoverage < coveredNodes) {
-                    bestGroup = group;
-                    maxCoverage = coveredNodes;
-                }
-            }
-            if(bestGroup != null) {
-                uncoveredNodes.removeAll(bestGroup);
-                selectedGroups.add(bestGroup);
-                nodeGroups.remove(bestGroup);
-            }
-        }
-
-        return selectedGroups;
-    }
-
-    public List<List<String>> optimalSetCover() {
-        Set<String> coveredNodes = null;
-        int groupSize = nodeGroups.size();
-
-        for(int i = 1; i <= groupSize; i++) {
-            List<List<List<String>>> groupCombinations = getCombinations(nodeGroups, i);
-
-            for(List<List<String>> groupCombo : groupCombinations) {
-                coveredNodes = new HashSet<>();
-
-                for(List<String> subset : groupCombo) {
-                    coveredNodes.addAll(subset);
-                }
-
-                if(coveredNodes.containsAll(allNodes)) {
-                    return groupCombo;
-                }
-            }
-        }
-
-        return null;
-    }
-
-    public List<List<List<String>>> getCombinations(List<List<String>> nodeGroups, int size) {
-        List<List<List<String>>> result = new ArrayList<>();
-        findCombinations(nodeGroups, new ArrayList<>(), 0, size, result);
-
-        return result;
-    }
-
-    private void findCombinations(List<List<String>> nodeGroups, List<List<String>> current, int start, int size, List<List<List<String>>> result) {
-        if(current.size() == size) {
-            result.add(new ArrayList<>(current));
-            return;
-        }
-
-        for(int i = start; i < nodeGroups.size(); i++) {
-            current.add(nodeGroups.get(i));
-            findCombinations(nodeGroups, current, i + 1, size, result);
-            current.remove(current.size() - 1);
-        }
-    }
-}
+        connections.add
