@@ -66,11 +66,11 @@ Bag calculateOptimalBag(vector<Item>& items) {
 }
 
 void displayBagContents(const Bag& bag) {
-    printf("Item\tWeight in Bag\tValue in Bag\n");
+    printf("Goods\tWeight of goods in knapsack\tValue of goods in knapsack\n");
     for (const auto& item : bag.items) {
-        printf("%-5s\t%-10f\t%-10f\n", item.name.c_str(), item.weight, item.value);
+        printf("%-5s\t%-.2f\t\t\t%-.2f\n", item.name.c_str(), item.weight, item.value);
     }
-    printf("Total \t%-10f\t%-10f\n", bag.totalWeight(), bag.totalValue());
+    printf("Total \t%-.2f\t\t\t%-.2f\n", bag.totalWeight(), bag.totalValue());
 }
 
 int main() {
