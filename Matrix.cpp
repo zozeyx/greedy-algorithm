@@ -1,78 +1,112 @@
 #include <iostream>
 #include <vector>
-#include <limits.h>
+#include <climits>
 #include <fstream>
 #include <sstream>
-#include <string>
 
 using namespace std;
 
-// 2D DP 배열을 출력하는 함수
-void printDPTable(const vector<vector<int>>& dp) {
-    cout << "DP 테이블:" << endl;
-    for (const auto& row : dp) {
-        for (int val : row) {
-            cout << val << " ";
+// 행렬을 저장하기 위한 구조체
+struct Matrix {
+    int rows, cols;
+    vector<vector<int>> data;
+};
+
+// 파일에서 행렬을 읽어오는 함수
+Matrix readMatrixFromFile(ifstream& file) {
+    Matrix matrix;
+    string line;
+    
+    // 행렬의 각 행을 읽어서 저장
+    while (getline(file, line)) {
+        stringstream ss(line);
+        int val;
+        vector<int> row;
+        
+        while (ss >> val) {
+            row.push_back(val);
+            if (ss.peek() == ',') ss.ignore();  // comma를 건너뛰기
         }
-        cout << endl;
+
+        if (row.size() > 0) {
+            if (matrix.rows == 0) {
+                matrix.cols = row.size();
+            }
+            matrix.data.push_back(row);
+            matrix.rows++;
+        }
     }
+
+    return matrix;
 }
 
-// 체이닝 행렬 곱셈 알고리즘
-void matrixChainMultiplication(const vector<int>& dims) {
-    int n = dims.size() - 1;
+// Chained Matrix Multiplication 동적 계획법 구현
+int matrixChainOrder(const vector<Matrix>& matrices, vector<vector<int>>& m, vector<vector<int>>& s) {
+    int n = matrices.size();
     
-    // DP 테이블 초기화
-    vector<vector<int>> dp(n, vector<int>(n, 0));
-    
-    // 최소 곱셈 횟수 계산
-    for (int len = 2; len <= n; len++) { // len: 체인의 길이
-        for (int i = 0; i < n - len + 1; i++) {
-            int j = i + len - 1;
-            dp[i][j] = INT_MAX;
-            for (int k = i; k < j; k++) {
-                int q = dp[i][k] + dp[k+1][j] + dims[i] * dims[k+1] * dims[j+1];
-                if (q < dp[i][j]) {
-                    dp[i][j] = q;
+    // m[i][j]는 A_i부터 A_j까지 곱하는 최소 비용을 저장
+    // s[i][j]는 분할 지점을 저장
+    for (int i = 0; i < n; ++i) {
+        m[i][i] = 0;  // 한 행렬 자체는 곱할 필요가 없으므로 0
+    }
+
+    // 두 개 이상의 행렬을 곱할 때의 최적화
+    for (int length = 2; length <= n; ++length) {  // 곱할 행렬의 수
+        for (int i = 0; i <= n - length; ++i) {
+            int j = i + length - 1;
+            m[i][j] = INT_MAX;  // 최소값을 찾기 위한 초기화
+
+            // 행렬 분할 지점 k 찾기
+            for (int k = i; k < j; ++k) {
+                int q = m[i][k] + m[k+1][j] + matrices[i].rows * matrices[k].cols * matrices[j].cols;
+                if (q < m[i][j]) {
+                    m[i][j] = q;
+                    s[i][j] = k;
                 }
             }
         }
     }
 
-    // DP 테이블 출력
-    printDPTable(dp);
+    return m[0][n-1];  // 전체 행렬 곱셈의 최소 비용 반환
+}
 
-    // 최소 곱셈 횟수 출력
-    cout << "최소 곱셈 횟수: " << dp[0][n-1] << endl;
+// DP 테이블 출력 함수
+void printTable(const vector<vector<int>>& m) {
+    int n = m.size();
+    cout << "DP 테이블 (m):" << endl;
+    for (int i = 0; i < n; ++i) {
+        for (int j = 0; j < n; ++j) {
+            cout << m[i][j] << "\t";
+        }
+        cout << endl;
+    }
 }
 
 int main() {
-    string filename = "matrix_input.txt";
-    ifstream file(filename);
-    vector<int> dims; // 행렬 크기를 저장할 벡터
+    ifstream file("matrix_input.txt");
     
-    string line;
-    while (getline(file, line)) {
-        // 행렬 크기 파싱: 예: A1 = [[ -9  -2 ... ]]
-        size_t pos = line.find("=");
-        if (pos != string::npos) {
-            string matrixPart = line.substr(pos + 1);
-            matrixPart = matrixPart.substr(2, matrixPart.size() - 4); // A1 = [[ ]] 부분 제거
-
-            stringstream ss(matrixPart);
-            int value;
-            while (ss >> value) {
-                dims.push_back(value);
-            }
+    // 행렬 입력받기
+    vector<Matrix> matrices;
+    while (file) {
+        string line;
+        getline(file, line);
+        if (line.find("A") == 0) {  // 행렬 이름 (A1, A2 등)
+            matrices.push_back(readMatrixFromFile(file));
         }
     }
-
-    file.close();
-
-    // 행렬의 크기 (dims)는 행렬 A1, A2, ..., An의 차원을 포함해야 합니다.
-    // 예를 들어: dims = { 10, 20, 30, 40, 30 } (4개의 행렬, 차원 10x20, 20x30, 30x40, 40x30)
     
-    matrixChainMultiplication(dims);
+    int n = matrices.size();  // 행렬의 수
+    vector<vector<int>> m(n, vector<int>(n, 0));  // 최소 계산 비용을 위한 DP 테이블
+    vector<vector<int>> s(n, vector<int>(n, 0));  // 최적 분할 지점 테이블
+    
+    // Chained Matrix Multiplication 실행
+    int minCost = matrixChainOrder(matrices, m, s);
+    
+    // 최소 곱셈 횟수 출력
+    cout << "최소 곱셈 횟수: " << minCost << endl;
+    
+    // DP 테이블 출력
+    printTable(m);
 
     return 0;
 }
