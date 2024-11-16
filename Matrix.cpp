@@ -3,6 +3,8 @@
 #include <climits>
 #include <sstream>
 #include <fstream>
+#include <string>
+#include <cctype>
 
 using namespace std;
 
@@ -39,43 +41,60 @@ int matrix_chain_order(const vector<pair<int, int>>& dims, int n) {
     return dp[0][n-1];
 }
 
-// 행렬 이름을 인덱스로 변환하는 함수
-int matrix_name_to_index(const string& name) {
-    return name[1] - '1';
-}
-
 // 행렬 파일을 읽고, 행렬을 파싱하는 함수
 vector<vector<vector<int>>> parse_matrices_from_file(const string& filename, int& num_matrices) {
     ifstream file(filename);
     string line;
     vector<vector<vector<int>>> matrices;
     vector<vector<int>> current_matrix;
-    string current_matrix_name;
+    bool inside_matrix = false;
+
+    if (!file.is_open()) {
+        cerr << "파일을 열 수 없습니다: " << filename << endl;
+        exit(1);
+    }
 
     while (getline(file, line)) {
-        if (line.empty()) continue;
-
-        // 행렬 이름 (A1, A2 등)
-        if (line[0] == 'A') {
+        // 행렬 구분자 처리
+        if (line.find("A") != string::npos && line.find("=") != string::npos) {
+            // 이전 행렬이 있으면 저장
             if (!current_matrix.empty()) {
                 matrices.push_back(current_matrix);
+                current_matrix.clear();
             }
-            current_matrix.clear();
+            inside_matrix = true;
+            continue;
+        }
 
-            current_matrix_name = line.substr(0, 2);  // 예: A1, A2 등
-        } else {
-            // 행렬 데이터 (정수로 변환)
-            stringstream ss(line);
+        // 행렬 데이터 읽기
+        if (inside_matrix && line.find("[[") != string::npos) {
+            // 행렬 시작 부분을 찾으면
+            string matrix_data = line.substr(line.find("[[") + 2);
+            stringstream ss(matrix_data);
             vector<int> row;
             int num;
+
             while (ss >> num) {
                 row.push_back(num);
             }
-            current_matrix.push_back(row);
+
+            // 행렬의 행 추가
+            if (!row.empty()) {
+                current_matrix.push_back(row);
+            }
+        }
+
+        // 행렬 끝나는 부분 찾기
+        if (inside_matrix && line.find("]]") != string::npos) {
+            matrices.push_back(current_matrix);
+            current_matrix.clear();
+            inside_matrix = false;
         }
     }
+
+    // 마지막 행렬 처리
     if (!current_matrix.empty()) {
-        matrices.push_back(current_matrix); // 마지막 행렬 추가
+        matrices.push_back(current_matrix);
     }
 
     num_matrices = matrices.size();
@@ -84,7 +103,7 @@ vector<vector<vector<int>>> parse_matrices_from_file(const string& filename, int
 
 int main() {
     // 파일 경로 설정
-    string filename = "matrix_input.txt";
+    string filename = "matrices.txt";
     int num_matrices;
 
     // 행렬 파싱
