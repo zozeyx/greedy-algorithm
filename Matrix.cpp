@@ -1,73 +1,78 @@
 #include <iostream>
 #include <vector>
-#include <climits>
+#include <limits.h>
 #include <fstream>
 #include <sstream>
+#include <string>
 
 using namespace std;
 
-// 행렬 크기 정보
-struct Matrix {
-    int rows, cols;
-};
+// 2D DP 배열을 출력하는 함수
+void printDPTable(const vector<vector<int>>& dp) {
+    cout << "DP 테이블:" << endl;
+    for (const auto& row : dp) {
+        for (int val : row) {
+            cout << val << " ";
+        }
+        cout << endl;
+    }
+}
 
-// Chained Matrix Multiplications 알고리즘
-void matrixChainOrder(const vector<Matrix>& matrices) {
-    int n = matrices.size();
-    vector<vector<int>> m(n, vector<int>(n, 0)); // 최소 곱셈 횟수를 저장하는 DP 테이블
-    vector<vector<int>> s(n, vector<int>(n, 0)); // 분할 지점을 저장하는 테이블
-
-    // l은 체인의 길이
-    for (int l = 2; l <= n; l++) {
-        for (int i = 0; i <= n - l; i++) {
-            int j = i + l - 1;
-            m[i][j] = INT_MAX; // 초기화
-
-            // k는 분할 지점
+// 체이닝 행렬 곱셈 알고리즘
+void matrixChainMultiplication(const vector<int>& dims) {
+    int n = dims.size() - 1;
+    
+    // DP 테이블 초기화
+    vector<vector<int>> dp(n, vector<int>(n, 0));
+    
+    // 최소 곱셈 횟수 계산
+    for (int len = 2; len <= n; len++) { // len: 체인의 길이
+        for (int i = 0; i < n - len + 1; i++) {
+            int j = i + len - 1;
+            dp[i][j] = INT_MAX;
             for (int k = i; k < j; k++) {
-                int q = m[i][k] + m[k+1][j] + matrices[i].rows * matrices[k].cols * matrices[j].cols;
-                if (q < m[i][j]) {
-                    m[i][j] = q;
-                    s[i][j] = k;
+                int q = dp[i][k] + dp[k+1][j] + dims[i] * dims[k+1] * dims[j+1];
+                if (q < dp[i][j]) {
+                    dp[i][j] = q;
                 }
             }
         }
     }
 
     // DP 테이블 출력
-    cout << "DP Table (최소 곱셈 횟수):\n";
-    for (int i = 0; i < n; i++) {
-        for (int j = 0; j < n; j++) {
-            cout << m[i][j] << " ";
-        }
-        cout << endl;
-    }
+    printDPTable(dp);
 
-    // 최고 곱셈 횟수 출력
-    cout << "최고 곱셈 횟수: " << m[0][n-1] << endl;
-}
-
-// 입력 파일에서 행렬 크기 정보를 읽어들임
-vector<Matrix> readMatrices(const string& filename) {
-    ifstream file(filename);
-    vector<Matrix> matrices;
-    string line;
-    int rows, cols;
-
-    while (getline(file, line)) {
-        stringstream ss(line);
-        ss >> rows >> cols;
-        matrices.push_back({rows, cols});
-    }
-
-    return matrices;
+    // 최소 곱셈 횟수 출력
+    cout << "최소 곱셈 횟수: " << dp[0][n-1] << endl;
 }
 
 int main() {
-    string filename = "matrix_input.txt"; // 입력 파일 경로
-    vector<Matrix> matrices = readMatrices(filename);
+    string filename = "matrix_input.txt";
+    ifstream file(filename);
+    vector<int> dims; // 행렬 크기를 저장할 벡터
+    
+    string line;
+    while (getline(file, line)) {
+        // 행렬 크기 파싱: 예: A1 = [[ -9  -2 ... ]]
+        size_t pos = line.find("=");
+        if (pos != string::npos) {
+            string matrixPart = line.substr(pos + 1);
+            matrixPart = matrixPart.substr(2, matrixPart.size() - 4); // A1 = [[ ]] 부분 제거
 
-    matrixChainOrder(matrices);
+            stringstream ss(matrixPart);
+            int value;
+            while (ss >> value) {
+                dims.push_back(value);
+            }
+        }
+    }
+
+    file.close();
+
+    // 행렬의 크기 (dims)는 행렬 A1, A2, ..., An의 차원을 포함해야 합니다.
+    // 예를 들어: dims = { 10, 20, 30, 40, 30 } (4개의 행렬, 차원 10x20, 20x30, 30x40, 40x30)
+    
+    matrixChainMultiplication(dims);
 
     return 0;
 }
