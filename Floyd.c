@@ -35,7 +35,31 @@ void floydWarshall(int locationCount, int distanceMatrix[MAX_SIZE][MAX_SIZE]) {
     }
 }
 
-void displayDistances(char LocationArray[][20], int distanceMatrix[][MAX_SIZE], int locationCount) {
+void dijkstra(int locationCount, int distanceMatrix[MAX_SIZE][MAX_SIZE], int start, int result[MAX_SIZE]) {
+    int visited[MAX_SIZE] = {0};
+    for (int i = 0; i < locationCount; i++) result[i] = INF_VALUE;
+    result[start] = 0;
+
+    for (int i = 0; i < locationCount; i++) {
+        int minDist = INF_VALUE, u = -1;
+        for (int j = 0; j < locationCount; j++) {
+            if (!visited[j] && result[j] < minDist) {
+                minDist = result[j];
+                u = j;
+            }
+        }
+        if (u == -1) break;
+        visited[u] = 1;
+
+        for (int v = 0; v < locationCount; v++) {
+            if (!visited[v] && distanceMatrix[u][v] != INF_VALUE && result[u] + distanceMatrix[u][v] < result[v]) {
+                result[v] = result[u] + distanceMatrix[u][v];
+            }
+        }
+    }
+}
+
+void displayDiagonalUpperTable(char LocationArray[][20], int distanceMatrix[][MAX_SIZE], int locationCount) {
     printf("       ");
     for (int i = 0; i < locationCount; i++) printf("%-10s", LocationArray[i]);
     printf("\n");
@@ -43,10 +67,14 @@ void displayDistances(char LocationArray[][20], int distanceMatrix[][MAX_SIZE], 
     for (int i = 0; i < locationCount; i++) {
         printf("%-10s", LocationArray[i]);
         for (int j = 0; j < locationCount; j++) {
-            if (distanceMatrix[i][j] == INF_VALUE)
-                printf("%-10s", "INF");
-            else
-                printf("%-10d", distanceMatrix[i][j]);
+            if (i <= j) {
+                if (distanceMatrix[i][j] == INF_VALUE)
+                    printf("%-10s", "INF");
+                else
+                    printf("%-10d", distanceMatrix[i][j]);
+            } else {
+                printf("%-10s", "");
+            }
         }
         printf("\n");
     }
@@ -91,13 +119,22 @@ int main() {
     }
 
     // 플로이드-와샬 실행 시간 측정
-    clock_t startTime = clock();
+    clock_t startTimeFloyd = clock();
     floydWarshall(locationCount, distanceMatrix);
-    clock_t endTime = clock();
+    clock_t endTimeFloyd = clock();
 
-    printf("\nFloyd-Warshall Algorithm Distance Matrix:\n");
-    displayDistances(LocationArray, distanceMatrix, locationCount);
-    printf("Running time (ms): %lu\n", (endTime - startTime));
+    printf("\nFloyd-Warshall Algorithm Distance Matrix (Diagonal Upper Only):\n");
+    displayDiagonalUpperTable(LocationArray, distanceMatrix, locationCount);
+    printf("Running time (ms): %lu\n", (endTimeFloyd - startTimeFloyd));
+
+    // 다익스트라 실행 시간 측정
+    clock_t startTimeDijkstra = clock();
+    int dijkstraResult[MAX_SIZE];
+    for (int i = 0; i < locationCount; i++) {
+        dijkstra(locationCount, distanceMatrix, i, dijkstraResult);
+    }
+    clock_t endTimeDijkstra = clock();
+    printf("\nDijkstra Algorithm Running time (ms): %lu\n", (endTimeDijkstra - startTimeDijkstra));
 
     return 0;
 }
