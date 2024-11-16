@@ -1,6 +1,7 @@
 #include <iostream>
 #include <vector>
 #include <climits>  // for INT_MAX
+#include <iomanip>  // for setw
 
 using namespace std;
 
@@ -24,17 +25,23 @@ int DPCoinChange(vector<int>& coins, int n) {
     // DP 테이블 출력 (위에는 금액, 아래에는 최소 동전 개수)
     cout << "\nDP 테이블:" << endl;
     // 위에 금액 출력
-    cout << "금액    ";
+    cout << "j   ";
     for (int i = 1; i <= n; i++) {
-        cout << i << "    ";
+        cout << setw(4) << i;  // setw로 간격 맞추기
+    }
+    cout << endl;
+
+    // 구분선 출력
+    cout << "-----------------------------";
+    for (int i = 1; i <= n; i++) {
+        cout << "----";  // 고정 폭으로 구분선
     }
     cout << endl;
 
     // 아래에 최소 동전 개수 출력
-    cout << "-----------------------------" << endl;
-    cout << "최소 동전 개수 ";
+    cout << "c   ";
     for (int i = 1; i <= n; i++) {
-        cout << (C[i] == INT_MAX ? "불가능" : to_string(C[i])) << "    ";
+        cout << setw(4) << (C[i] == INT_MAX ? "불가능" : to_string(C[i]));  // 최소 동전 개수 출력
     }
     cout << endl;
 
