@@ -11,7 +11,7 @@ def knapsack(weights, values, capacity):
                 dp[i][w] = dp[i - 1][w]
 
     # DP 테이블 출력
-    print("DP 테이블:")
+    print("테이블:")
     for row in dp:
         print(row)
 
